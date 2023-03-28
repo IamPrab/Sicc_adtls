@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from numpy.polynomial.polynomial import polyfit
 import xlsxwriter
 from scipy.stats import pearsonr
+from scipy import stats
 
 Pairs ={
     'VMIN': 'VMAX'
@@ -94,7 +95,7 @@ def CorrelationValues(datafromCsvDIct):
 
                         correlation, p_value = pearsonr(x1, x2)
 
-                        if correlation > 0.8 or correlation < -0.8:
+                        if correlation > 0.9 or correlation < -0.9:
                             correlationMatrix[key] = correlation
                             rowData = [correlationVmin, test_y,
                                        correlation]
@@ -144,9 +145,8 @@ def CalFits(pairs, datafromCsvDIct):
         x_y = pair.split('@')
         x, y = get_x_y_pair(datafromCsvDIct[x_y[0]], datafromCsvDIct[x_y[1]])
         fit = GetFitLines(x, y)
-        key = pair[0] + "%" + pair[1]
 
-        pairFits[key] = fit
+        pairFits[pair] = fit
 
     return pairFits
 
@@ -160,7 +160,7 @@ def WriteTOApprovalFile (pairFits, path):
 
     for pairFit in pairFits:
         count = count+1
-        names = pairFit.split('%')
+        names = pairFit.split('@')
         data = pairFits[pairFit]
         row = [names[0], names[1], data[0], data[1], data[2]]
         worksheet.write_row(count,0,row)
@@ -197,13 +197,13 @@ def GraphFactory(approvalFileData, datafromCsvDIct, outputPath):
     for pair in approvalFileData:
         X_name = approvalFileData[pair][0]
         Y_name = approvalFileData[pair][1]
-        slope = approvalFileData[pair][2]
-        intercept = approvalFileData[pair][3]
-        rmse = approvalFileData[pair][4]
+        slope = float(approvalFileData[pair][2])
+        intercept = float(approvalFileData[pair][3])
+        rmse = float(approvalFileData[pair][4])
         count = approvalFileData[pair][5]
 
-        X_Data = datafromCsvDIct[X_name][0]
-        Y_Data = datafromCsvDIct[Y_name][0]
+        X_Data = datafromCsvDIct[X_name]
+        Y_Data = datafromCsvDIct[Y_name]
 
         StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, outputPath)
 
@@ -211,19 +211,21 @@ def GraphFactory(approvalFileData, datafromCsvDIct, outputPath):
 
 def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, outputPath):
     results_dir = os.path.join(outputPath + '/GraphDataSICC')
+
     if not os.path.exists(results_dir):
         os.mkdir(results_dir)
         print(results_dir+"...Result directory")
 
-    x = np.array(X_Data)
-    y = np.array(Y_Data)
+    x, y = get_x_y_pair(X_Data, Y_Data)
+    x = np.array(x)
+    y = np.array(y)
 
     plt.figure()
 
     plt.scatter(x, y, marker='^', color='blue', label="Unit")
     plt.xlabel(X_name)
     plt.ylabel(Y_name)
-    plt.plot(x, intercept + slope * x, 'g-', label = "FitLine")
+    plt.plot(x, float(intercept) + float(slope) * x, 'g-', label = "FitLine")
 
     offset = intercept + 6*(rmse)
     plt.plot(x, offset + slope * x, 'r-',label = "KillLine_6_Sigma")
@@ -239,8 +241,109 @@ def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, ou
     del x, y
     gc.collect()
 
+###########################################################################################################################################################
+
+def WriteToFile(siccLimits, outputPath):
+    OutFinalCSVPath = outputPath + "\\SICCApprovalLimits.xlsx"
+    workbook = xlsxwriter.Workbook(OutFinalCSVPath)
+    worksheet = workbook.add_worksheet()
+    header = ['SICC Test', 'Mean', 'Median', 'Standard Deviation', 'PseduSigma_Upper', 'PseduSigma_Lower', 'HighLimit', 'LowLimit',  'Graph']
+    worksheet.write_row(0, 0, header)
+    count = 0
+
+    for sicclimit in siccLimits:
+        count = count + 1
+        row =[sicclimit["TestName"], sicclimit["Mean"], sicclimit["Median"], sicclimit["StdDev"],
+              sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"], sicclimit["LowLimit"]]
+        worksheet.write_row(count,0,row)
+        worksheet.write_url(count,8,sicclimit["GraphPath"])
+    workbook.close()
+
+    return
 
 
+
+
+def GetBasicParams(datafromCsvDIct, outputPath):
+
+    siccLimits = []
+
+    results_dir = os.path.join(outputPath + '/GraphDataSICCLimits')
+    if not os.path.exists(results_dir):
+        os.mkdir(results_dir)
+        print(results_dir + "...Result directory")
+
+    for sicctest in datafromCsvDIct:
+        mean, median, std = GetMean(datafromCsvDIct[sicctest][0])
+        fileName = results_dir + "//" + sicctest.split("::")[1] + ".png"
+        quantile_5 = GetQuantiles(datafromCsvDIct[sicctest][0],5)
+        quantile_95 = GetQuantiles(datafromCsvDIct[sicctest][0],95)
+
+        psedoSigmaLower = (6 * (median - quantile_5)) / 1.6449
+        psedoSigmaUpper = (6 * (quantile_95 - median)) / 1.6449
+
+        highLimit = median + psedoSigmaUpper
+        lowLimit = median - psedoSigmaLower
+
+        GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName)
+
+        result ={
+            "TestName": sicctest,
+            "Mean": mean,
+            "Median" : median,
+            "StdDev" : std,
+            "PseduSigma_Upper" : psedoSigmaUpper,
+            "PseduSigma_Lower" : psedoSigmaLower,
+            "HighLimit" : highLimit,
+            "LowLimit" : lowLimit,
+            "GraphPath" : fileName
+        }
+        siccLimits.append(result)
+
+    return siccLimits
+
+
+def GetMean(x):
+    mean = np.mean(x)
+    median = np.median(x)
+    std = np.std(x)
+
+
+    return mean, median, std
+
+def GetQuantiles (x, percentage):
+    pointer = percentage/100
+    quantile = np.quantile(x, pointer)
+
+    return quantile
+
+
+def GetPercentileForGraph(x, filename):
+    maxi = max(x)
+    mini = min(x)
+    n_bins = len(np.unique(x))
+    #n_bins = 100
+    sigma = (maxi-mini)/n_bins
+    mu = 100
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+
+    # plot the cumulative histogram
+    n, bins, patches = ax.hist(x, n_bins, density=True, histtype='step',
+                               cumulative=True, label='Empirical')
+
+    # Overlay a reversed cumulative histogram.
+
+
+    # tidy up the figure
+    ax.grid(True)
+    ax.legend(loc='right')
+    ax.set_title('Cumulative steps')
+    ax.set_ylabel('SICC measurement')
+    ax.set_xlabel('Percentile')
+    plt.savefig(filename, bbox_inches='tight')
+    plt.clf()
+    plt.close()
 
 
 

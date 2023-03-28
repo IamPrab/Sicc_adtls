@@ -5,20 +5,6 @@ import Utils
 import numpy
 import xlsxwriter
 
-def FitLinesSICCFactory (outputPath, datafromCsvDIct):
-
-    pairs = Utils.CorrelationValues(datafromCsvDIct)
-
-    #pairs = Utils.createPairs(datafromCsvDIct)
-    print('Pairs Created')
-
-    pairFits = Utils.CalFits(pairs, datafromCsvDIct)
-    print('Fits Calculated')
-
-    OutPutApproval = Utils.WriteTOApprovalFile(pairFits, outputPath)
-    print('Writing Approval File')
-
-    return OutPutApproval
 
 def ReadData (path):
     subfolders_site = [f.path for f in os.scandir(path) if f.is_dir()]
@@ -36,6 +22,24 @@ def ReadData (path):
 
     return datafromCsvDIct
 
+
+def FitLinesSICCFactory (outputPath, datafromCsvDIct):
+
+    pairs = Utils.CorrelationValues(datafromCsvDIct)
+
+    #pairs = Utils.createPairs(datafromCsvDIct)
+    print('Pairs Created')
+
+    pairFits = Utils.CalFits(pairs, datafromCsvDIct)
+    print('Fits Calculated')
+
+    OutPutApproval = Utils.WriteTOApprovalFile(pairFits, outputPath)
+    print('Writing Approval File')
+
+    return OutPutApproval
+
+
+
 def DrawGraphs (datafromCsvDIct, outputPath):
     print(outputPath)
     approvalFile = outputPath + "\\SICCApproval.xlsx"
@@ -43,6 +47,15 @@ def DrawGraphs (datafromCsvDIct, outputPath):
     approvalFileData = Utils.ReadApprovalFile(approvalFile)
 
     Utils.GraphFactory(approvalFileData, datafromCsvDIct, outputPath)
+
+
+def LimitsSICCFactory ( datafromCsvDIct, outputPath):
+
+    siccLimits = Utils.GetBasicParams(datafromCsvDIct, outputPath)
+    print("Limits Calculated")
+    Utils.WriteToFile(siccLimits, outputPath)
+
+    return
 
 
 
@@ -66,6 +79,9 @@ if args.operation == 'SiccFit':
 
 if args.operation == 'SiccGraphs':
     DrawGraphs(datafromCsvDIct, outputPath)
+
+if args.operation == 'SiccLimits':
+    LimitsSICCFactory(datafromCsvDIct,outputPath)
 
 
 
