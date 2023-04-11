@@ -51,9 +51,10 @@ def DrawGraphs (datafromCsvDIct, outputPath):
 
 def LimitsSICCFactory ( datafromCsvDIct, outputPath):
 
+    existing_limits = Utils.ReadOldData(outputPath)
     siccLimits = Utils.GetBasicParams(datafromCsvDIct, outputPath)
     print("Limits Calculated")
-    Utils.WriteToFile(siccLimits, outputPath)
+    Utils.WriteToFile(siccLimits, outputPath, existing_limits)
 
     return
 

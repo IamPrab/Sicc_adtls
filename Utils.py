@@ -10,12 +10,12 @@ import xlsxwriter
 from scipy.stats import pearsonr
 from scipy import stats
 
-Pairs ={
+Pairs = {
     'VMIN': 'VMAX'
 }
 
-def readcsvSICC(datafiles):
 
+def readcsvSICC(datafiles):
     datadictFromCSV = {}
     for datafile in datafiles:
         fileopen = open(datafile)
@@ -32,7 +32,7 @@ def readcsvSICC(datafiles):
 
             uniqueID = lot + "%" + waferId + "%" + x + "%" + y + "%" + ibin
             if testname not in datadictFromCSV:
-                datadictFromCSV[testname] = [[result],[uniqueID]]
+                datadictFromCSV[testname] = [[result], [uniqueID]]
             else:
                 resultList = datadictFromCSV[testname][0]
                 uniqueIDList = datadictFromCSV[testname][1]
@@ -40,18 +40,18 @@ def readcsvSICC(datafiles):
                 resultList.append(result)
                 uniqueIDList.append(uniqueID)
 
-                datadictFromCSV[testname] = [resultList,uniqueIDList]
-
+                datadictFromCSV[testname] = [resultList, uniqueIDList]
 
     return datadictFromCSV
+
 
 def get_x_y_pair(data_instance_x, data_instance_y):
     x_len = len(data_instance_x[0])
     y_len = len(data_instance_y[0])
-    x=[]
-    y=[]
+    x = []
+    y = []
     refernce_unit = []
-    if x_len<=y_len:
+    if x_len <= y_len:
         refernce_unit = data_instance_x[1]
     else:
         refernce_unit = data_instance_y[1]
@@ -65,7 +65,7 @@ def get_x_y_pair(data_instance_x, data_instance_y):
                 x.append(x_val)
                 y.append(y_val)
 
-    return x,y
+    return x, y
 
 
 def CorrelationValues(datafromCsvDIct):
@@ -85,13 +85,13 @@ def CorrelationValues(datafromCsvDIct):
                         x1 = datafromCsvDIct[correlationVmin]
                         x2 = datafromCsvDIct[test_y]
 
-                        x1,x2 = get_x_y_pair(x1,x2)
+                        x1, x2 = get_x_y_pair(x1, x2)
 
                         key = test_x + '@' + test_y
                         DuplicateCheck[key] = True
-                        if len(x1)!=len(x2):
-                            print(len(x1),len(x2))
-                            print(test_y,test_x)
+                        if len(x1) != len(x2):
+                            print(len(x1), len(x2))
+                            print(test_y, test_x)
 
                         correlation, p_value = pearsonr(x1, x2)
 
@@ -105,21 +105,19 @@ def CorrelationValues(datafromCsvDIct):
     return correlationMatrix
 
 
-
 def createPairs(dictData):
-
     pairsofTests = []
 
     for testname in dictData:
         for pair in Pairs:
-            if testname.find(pair)>0:
-                pairTest =  testname.replace(pair, Pairs[pair])
+            if testname.find(pair) > 0:
+                pairTest = testname.replace(pair, Pairs[pair])
 
-                pairToGo = [testname,pairTest]
+                pairToGo = [testname, pairTest]
                 pairsofTests.append(pairToGo)
 
-
     return pairsofTests
+
 
 def getLinePoints(x, y, b, m):
     c = 0
@@ -130,14 +128,15 @@ def getLinePoints(x, y, b, m):
         c = c + 1
     return linePoints
 
-def GetFitLines(x, y):
 
+def GetFitLines(x, y):
     b, m = polyfit(x, y, 1)
     linePoints = getLinePoints(x, y, b, m)
     MSE = np.square(np.subtract(y, linePoints)).mean()
     RMSE = math.sqrt(MSE)
 
-    return [m,b,RMSE]
+    return [m, b, RMSE]
+
 
 def CalFits(pairs, datafromCsvDIct):
     pairFits = {}
@@ -150,7 +149,8 @@ def CalFits(pairs, datafromCsvDIct):
 
     return pairFits
 
-def WriteTOApprovalFile (pairFits, path):
+
+def WriteTOApprovalFile(pairFits, path):
     OutFinalCSVPath = path + "\\SICCApproval.xlsx"
     workbook = xlsxwriter.Workbook(OutFinalCSVPath)
     worksheet = workbook.add_worksheet()
@@ -159,18 +159,18 @@ def WriteTOApprovalFile (pairFits, path):
     count = 0
 
     for pairFit in pairFits:
-        count = count+1
+        count = count + 1
         names = pairFit.split('@')
         data = pairFits[pairFit]
         row = [names[0], names[1], data[0], data[1], data[2]]
-        worksheet.write_row(count,0,row)
+        worksheet.write_row(count, 0, row)
 
         graphName = path + "\\GraphDataSICC\\" + pairFit.split('::')[0] + '_' + str(count) + '.png'
-        worksheet.write_url(count,5,graphName)
-
+        worksheet.write_url(count, 5, graphName)
 
     workbook.close()
     return OutFinalCSVPath
+
 
 def ReadApprovalFile(csvAprrovalFile):
     excel_data = pd.read_excel(csvAprrovalFile)
@@ -183,7 +183,7 @@ def ReadApprovalFile(csvAprrovalFile):
         key = data['SICC Test X'][count] + "%" + data['SICC Test Y'][count]
         if key not in dict_data:
             stuff = [data['SICC Test X'][count], (data['SICC Test Y'][count]), float(data['Slope'][count]),
-                     float(data['Intercept'][count]), float(data['RMSE'][count]),count]
+                     float(data['Intercept'][count]), float(data['RMSE'][count]), count]
             dict_data[key] = stuff
         else:
             print(key)
@@ -192,8 +192,8 @@ def ReadApprovalFile(csvAprrovalFile):
 
     return dict_data
 
-def GraphFactory(approvalFileData, datafromCsvDIct, outputPath):
 
+def GraphFactory(approvalFileData, datafromCsvDIct, outputPath):
     for pair in approvalFileData:
         X_name = approvalFileData[pair][0]
         Y_name = approvalFileData[pair][1]
@@ -209,12 +209,13 @@ def GraphFactory(approvalFileData, datafromCsvDIct, outputPath):
 
     return
 
+
 def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, outputPath):
     results_dir = os.path.join(outputPath + '/GraphDataSICC')
 
     if not os.path.exists(results_dir):
         os.mkdir(results_dir)
-        print(results_dir+"...Result directory")
+        print(results_dir + "...Result directory")
 
     x, y = get_x_y_pair(X_Data, Y_Data)
     x = np.array(x)
@@ -225,15 +226,15 @@ def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, ou
     plt.scatter(x, y, marker='^', color='blue', label="Unit")
     plt.xlabel(X_name)
     plt.ylabel(Y_name)
-    plt.plot(x, float(intercept) + float(slope) * x, 'g-', label = "FitLine")
+    plt.plot(x, float(intercept) + float(slope) * x, 'g-', label="FitLine")
 
-    offset = intercept + 6*(rmse)
-    plt.plot(x, offset + slope * x, 'r-',label = "KillLine_6_Sigma")
+    offset = intercept + 6 * (rmse)
+    plt.plot(x, offset + slope * x, 'r-', label="KillLine_6_Sigma")
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
 
-    filename = results_dir + "\\" + str(count+1) +".png"
+    filename = results_dir + "\\" + str(count + 1) + ".png"
     if '::' in X_name:
-        filename = results_dir + "\\" + X_name.split('::')[0] + '_' + str(count+1) +".png"
+        filename = results_dir + "\\" + X_name.split('::')[0] + '_' + str(count + 1) + ".png"
 
     plt.savefig(filename, bbox_inches='tight')
     plt.clf()
@@ -241,31 +242,67 @@ def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, ou
     del x, y
     gc.collect()
 
+
 ###########################################################################################################################################################
 
-def WriteToFile(siccLimits, outputPath):
+def ReadOldData(outputPath):
+    gsdsTokens = outputPath + "/GSDSTokens.csv"
+
+    tokens_limits = {}
+    if os.path.exists(gsdsTokens):
+        fileopen = open(gsdsTokens)
+        data = csv.DictReader(fileopen)
+
+        for row in data:
+            key = row['TestName'] + '_' + row['ItuffToken'].upper()
+            tokens_limits[key] = {
+                'GSDS': row['GSDSToken'],
+                'HighLimit': row['HighLimit'],
+                'LowLimit': row['LowLimit'],
+                'Pin': row['Pin'],
+                'TestName': row['TestName'] + '_' + row['ItuffToken'],
+                'ItuffToken': row['ItuffToken'],
+                'ConfigFile' : row['ConfigFile'],
+                'ConfigSet' : row['ConfigSet']
+            }
+
+    return tokens_limits
+
+
+def WriteToFile(siccLimits, outputPath, existing_limits):
     OutFinalCSVPath = outputPath + "\\SICCApprovalLimits.xlsx"
     workbook = xlsxwriter.Workbook(OutFinalCSVPath)
     worksheet = workbook.add_worksheet()
-    header = ['SICC Test', 'Mean', 'Median', 'Standard Deviation', 'PseduSigma_Upper', 'PseduSigma_Lower', 'HighLimit', 'LowLimit',  'Graph']
+    header = ['SICC Test', 'Mean', 'Median', 'Standard Deviation', 'PseduSigma_Upper', 'PseduSigma_Lower', 'HighLimit',
+              'LowLimit', 'Approval','Graph', 'Previous Low Limit', 'Previous High Limit', 'GSDS', 'Ituff Token', 'ConfigFile', 'ConfigSet','Pin']
     worksheet.write_row(0, 0, header)
     count = 0
 
     for sicclimit in siccLimits:
         count = count + 1
-        row =[sicclimit["TestName"], sicclimit["Mean"], sicclimit["Median"], sicclimit["StdDev"],
-              sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"], sicclimit["LowLimit"]]
-        worksheet.write_row(count,0,row)
-        worksheet.write_url(count,8,sicclimit["GraphPath"])
+        row = [sicclimit["TestName"], sicclimit["Mean"], sicclimit["Median"], sicclimit["StdDev"],
+               sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"],
+               sicclimit["LowLimit"], '']
+        worksheet.write_row(count, 0, row)
+        worksheet.write_url(count, 9, sicclimit["GraphPath"])
+
+        if sicclimit["TestName"] in existing_limits:
+            limits = existing_limits[sicclimit["TestName"]]
+            hl = float(limits['HighLimit'])
+            ll = float(limits['LowLimit'])
+            gsds = limits['GSDS']
+            ituff_token = limits['ItuffToken']
+
+            row = [ll, hl, gsds, ituff_token,limits['ConfigFile'], limits['ConfigSet'],limits['Pin']]
+
+            worksheet.write_row(count, 10, row)
+
     workbook.close()
 
-    return
-
-
+    return OutFinalCSVPath
 
 
 def GetBasicParams(datafromCsvDIct, outputPath):
-
     siccLimits = []
 
     results_dir = os.path.join(outputPath + '/GraphDataSICCLimits')
@@ -276,8 +313,8 @@ def GetBasicParams(datafromCsvDIct, outputPath):
     for sicctest in datafromCsvDIct:
         mean, median, std = GetMean(datafromCsvDIct[sicctest][0])
         fileName = results_dir + "//" + sicctest.split("::")[1] + ".png"
-        quantile_5 = GetQuantiles(datafromCsvDIct[sicctest][0],5)
-        quantile_95 = GetQuantiles(datafromCsvDIct[sicctest][0],95)
+        quantile_5 = GetQuantiles(datafromCsvDIct[sicctest][0], 5)
+        quantile_95 = GetQuantiles(datafromCsvDIct[sicctest][0], 95)
 
         psedoSigmaLower = (6 * (median - quantile_5)) / 1.6449
         psedoSigmaUpper = (6 * (quantile_95 - median)) / 1.6449
@@ -285,18 +322,18 @@ def GetBasicParams(datafromCsvDIct, outputPath):
         highLimit = median + psedoSigmaUpper
         lowLimit = median - psedoSigmaLower
 
-        GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName)
+        # GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName)
 
-        result ={
+        result = {
             "TestName": sicctest,
             "Mean": mean,
-            "Median" : median,
-            "StdDev" : std,
-            "PseduSigma_Upper" : psedoSigmaUpper,
-            "PseduSigma_Lower" : psedoSigmaLower,
-            "HighLimit" : highLimit,
-            "LowLimit" : lowLimit,
-            "GraphPath" : fileName
+            "Median": median,
+            "StdDev": std,
+            "PseduSigma_Upper": psedoSigmaUpper,
+            "PseduSigma_Lower": psedoSigmaLower,
+            "HighLimit": highLimit,
+            "LowLimit": lowLimit,
+            "GraphPath": fileName
         }
         siccLimits.append(result)
 
@@ -308,11 +345,11 @@ def GetMean(x):
     median = np.median(x)
     std = np.std(x)
 
-
     return mean, median, std
 
-def GetQuantiles (x, percentage):
-    pointer = percentage/100
+
+def GetQuantiles(x, percentage):
+    pointer = percentage / 100
     quantile = np.quantile(x, pointer)
 
     return quantile
@@ -322,8 +359,8 @@ def GetPercentileForGraph(x, filename):
     maxi = max(x)
     mini = min(x)
     n_bins = len(np.unique(x))
-    #n_bins = 100
-    sigma = (maxi-mini)/n_bins
+    # n_bins = 100
+    sigma = (maxi - mini) / n_bins
     mu = 100
 
     fig, ax = plt.subplots(figsize=(8, 4))
@@ -334,7 +371,6 @@ def GetPercentileForGraph(x, filename):
 
     # Overlay a reversed cumulative histogram.
 
-
     # tidy up the figure
     ax.grid(True)
     ax.legend(loc='right')
@@ -344,12 +380,3 @@ def GetPercentileForGraph(x, filename):
     plt.savefig(filename, bbox_inches='tight')
     plt.clf()
     plt.close()
-
-
-
-
-
-
-
-
-
