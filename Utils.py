@@ -1,7 +1,11 @@
 import gc
 import math
+import multiprocessing
 import os
 import csv
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from itertools import combinations
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -13,6 +17,11 @@ from scipy import stats
 Pairs = {
     'VMIN': 'VMAX'
 }
+
+Data_Link = {}
+
+overallKill_limits_psedosigma = {}
+overallKill_limits_stdLimits = {}
 
 
 def readcsvSICC(datafiles):
@@ -33,6 +42,7 @@ def readcsvSICC(datafiles):
             uniqueID = lot + "%" + waferId + "%" + x + "%" + y + "%" + ibin
             if testname not in datadictFromCSV:
                 datadictFromCSV[testname] = [[result], [uniqueID]]
+                Data_Link[testname] = datafile
             else:
                 resultList = datadictFromCSV[testname][0]
                 uniqueIDList = datadictFromCSV[testname][1]
@@ -50,6 +60,7 @@ def get_x_y_pair(data_instance_x, data_instance_y):
     y_len = len(data_instance_y[0])
     x = []
     y = []
+    uniqueId = []
     refernce_unit = []
     if x_len <= y_len:
         refernce_unit = data_instance_x[1]
@@ -61,12 +72,13 @@ def get_x_y_pair(data_instance_x, data_instance_y):
             if val in data_instance_y[1]:
                 x_val = data_instance_x[0][data_instance_x[1].index(val)]
                 y_val = data_instance_y[0][data_instance_y[1].index(val)]
+                uniqueId_val = data_instance_x[1][data_instance_x[1].index(val)]
 
                 x.append(x_val)
                 y.append(y_val)
+                uniqueId.append(uniqueId_val)
 
-    return x, y
-
+    return x, y, uniqueId
 
 def CorrelationValues(datafromCsvDIct):
     correlationMatrix = {}
@@ -85,7 +97,7 @@ def CorrelationValues(datafromCsvDIct):
                         x1 = datafromCsvDIct[correlationVmin]
                         x2 = datafromCsvDIct[test_y]
 
-                        x1, x2 = get_x_y_pair(x1, x2)
+                        x1, x2, uniqueId = get_x_y_pair(x1, x2)
 
                         key = test_x + '@' + test_y
                         DuplicateCheck[key] = True
@@ -106,7 +118,7 @@ def CorrelationValues(datafromCsvDIct):
 
 
 def createPairs(dictData):
-    pairsofTests = []
+    pairsofTests = {}
 
     for testname in dictData:
         for pair in Pairs:
@@ -114,10 +126,55 @@ def createPairs(dictData):
                 pairTest = testname.replace(pair, Pairs[pair])
 
                 pairToGo = [testname, pairTest]
-                pairsofTests.append(pairToGo)
+                key = testname + '@'+ pairTest
+                pairsofTests[key] = 0.9
 
     return pairsofTests
 
+def GetDPW(m, b, x, y, uniqueID):
+    passBucketY = 0
+    killBucketY = {}
+    uniquekillsBucket = []
+
+    kb1,kb2,kb3,kb4,kb5,kb43 = ({} for i in range (6))
+
+    count = 0
+    while (count < len(y)):
+        kill_line =  b + (m * x[count])
+        bin = uniqueID[count].split("%")[4]
+        uniqueID[count] = uniqueID[count]
+        if y[count] >= kill_line:
+            if uniqueID[count] not in killBucketY:
+                killBucketY[uniqueID[count]] = uniqueID[count]
+
+            if bin == "1":
+                if uniqueID[count] not in kb1:
+                    kb1[uniqueID[count]]= uniqueID[count]
+            elif bin == "2":
+                if uniqueID[count] not in kb2:
+                    kb2[uniqueID[count]]= uniqueID[count]
+            elif bin == "3":
+                if uniqueID[count] not in kb3:
+                    kb3[uniqueID[count]]= uniqueID[count]
+            elif bin == "5":
+                if uniqueID[count] not in kb5:
+                    kb5[uniqueID[count]]= uniqueID[count]
+            elif bin == "4":
+                if uniqueID[count] not in kb4:
+                    kb4[uniqueID[count]]= uniqueID[count]
+            elif bin == "43":
+                if uniqueID[count] not in kb43:
+                    kb43[uniqueID[count]]= uniqueID[count]
+        else:
+            passBucketY = passBucketY + 1
+        count = count + 1
+        #print(killBucketY)
+
+    passToKillBucket = [len(killBucketY), len(kb1), len(kb2), len(kb3), len(kb4), len(kb5), len(kb43)]
+    #print(passToKillBucket)
+
+
+    return passToKillBucket
 
 def getLinePoints(x, y, b, m):
     c = 0
@@ -128,45 +185,66 @@ def getLinePoints(x, y, b, m):
         c = c + 1
     return linePoints
 
-
-def GetFitLines(x, y):
-    b, m = polyfit(x, y, 1)
-    linePoints = getLinePoints(x, y, b, m)
+def GetFitLines(x, y, unique_id):
+    intercept, slope = polyfit(x, y, 1)
+    linePoints = getLinePoints(x, y, intercept, slope)
     MSE = np.square(np.subtract(y, linePoints)).mean()
     RMSE = math.sqrt(MSE)
+    intercept_kill = float(intercept) + (6*float(RMSE))
+    DPW = GetDPW(slope, intercept_kill, x, y, unique_id)
 
-    return [m, b, RMSE]
+    result_dict = {
+        'Slope': slope,
+        'Intercept_kill': intercept_kill,
+        'Intercept': intercept,
+        'RMSE': RMSE,
+        'DPW': DPW
+    }
+
+    return result_dict
 
 
 def CalFits(pairs, datafromCsvDIct):
     pairFits = {}
     for pair in pairs:
         x_y = pair.split('@')
-        x, y = get_x_y_pair(datafromCsvDIct[x_y[0]], datafromCsvDIct[x_y[1]])
-        fit = GetFitLines(x, y)
+        x, y, unique_id = get_x_y_pair(datafromCsvDIct[x_y[0]], datafromCsvDIct[x_y[1]])
+        fit = GetFitLines(x, y, unique_id)
 
         pairFits[pair] = fit
 
     return pairFits
 
 
+
 def WriteTOApprovalFile(pairFits, path):
     OutFinalCSVPath = path + "\\SICCApproval.xlsx"
     workbook = xlsxwriter.Workbook(OutFinalCSVPath)
     worksheet = workbook.add_worksheet()
-    header = ['SICC Test X', 'SICC Test Y', 'Slope', 'Intercept', 'RMSE']
+    header = ['SICC Test X', 'SICC Test Y', 'Slope', 'Intercept', 'RMSE', 'DPW']
     worksheet.write_row(0, 0, header)
     count = 0
+    datafileTracker = {}
 
     for pairFit in pairFits:
         count = count + 1
         names = pairFit.split('@')
         data = pairFits[pairFit]
-        row = [names[0], names[1], data[0], data[1], data[2]]
+
+        wafersListCount = path + '/WaferCount.txt'
+        dpwPerBin = []
+        if os.path.isfile(wafersListCount):
+            f = open(wafersListCount)
+            num_lines = int(f.read())
+            for killperbin in data['DPW']:
+                dpwPerBin.append(killperbin / num_lines)
+
+        #print(dpwPerBin)
+        row = [names[0], names[1], data['Slope'], data['Intercept'], data['RMSE'], dpwPerBin[0]]
         worksheet.write_row(count, 0, row)
 
         graphName = path + "\\GraphDataSICC\\" + pairFit.split('::')[0] + '_' + str(count) + '.png'
-        worksheet.write_url(count, 5, graphName)
+        worksheet.write_url(count, 6, graphName, string = 'Open Graph')
 
     workbook.close()
     return OutFinalCSVPath
@@ -217,7 +295,7 @@ def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, ou
         os.mkdir(results_dir)
         print(results_dir + "...Result directory")
 
-    x, y = get_x_y_pair(X_Data, Y_Data)
+    x, y, unique_id = get_x_y_pair(X_Data, Y_Data)
     x = np.array(x)
     y = np.array(y)
 
@@ -235,6 +313,9 @@ def StoreGraph(X_name, X_Data, Y_name, Y_Data, slope, intercept, rmse, count, ou
     filename = results_dir + "\\" + str(count + 1) + ".png"
     if '::' in X_name:
         filename = results_dir + "\\" + X_name.split('::')[0] + '_' + str(count + 1) + ".png"
+    else:
+        if '::' in Y_name:
+            filename = results_dir + "\\" + X_name + '@' + Y_name.split('::')[0] + '_' + str(count + 1) + ".png"
 
     plt.savefig(filename, bbox_inches='tight')
     plt.clf()
@@ -268,23 +349,49 @@ def ReadOldData(outputPath):
 
     return tokens_limits
 
+def WriteJslFile(outputPath, DataLink):
+
+    results_dir = os.path.join(outputPath + '/JmpGraphsScripts')
+    if not os.path.exists(results_dir):
+        os.mkdir(results_dir)
+        print(results_dir + "...Result directory")
+
+    name = DataLink.split('.csv')[0].split('DataFile')[1]
+    name = results_dir + "/JmpScriptRunner" + name + ".jsl"
+    file = open(name, "w")
+    approvalFile = outputPath + "\SICCApprovalLimits.xlsx"
+    jslScript = "\\\pjwade-desk.ger.corp.intel.com\AXEL_ADTL_REPORTS\AXEL_SICC_LIMITS_REPORT\plotAxelLimitsFunction.jsl"
+    # Write the code to the file
+    file.write(f"//!\nInclude(\"{jslScript}\" );"
+               f"\n\nplotLimits(\"{DataLink}\", \"{approvalFile}\");")
+    # Close the file
+    file.close()
+
+    return name
 
 def WriteToFile(siccLimits, outputPath, existing_limits):
     OutFinalCSVPath = outputPath + "\\SICCApprovalLimits.xlsx"
     workbook = xlsxwriter.Workbook(OutFinalCSVPath)
     worksheet = workbook.add_worksheet()
-    header = ['SICC Test', 'Mean', 'Median', 'Standard Deviation', 'PseduSigma_Upper', 'PseduSigma_Lower', 'HighLimit',
-              'LowLimit', 'Approval','Graph', 'Previous Low Limit', 'Previous High Limit', 'GSDS', 'Ituff Token', 'ConfigFile', 'ConfigSet','Pin']
+    header = ['SICC Test', 'Mean', 'Median', 'Standard Deviation','Sigma','PseudoSigma_Upper', 'PseudoSigma_Lower', 'HighLimit- PseuduSigma',
+              'LowLimit- PseudoSigma','DPW-PseudoSigma', 'HighLimit - StdSigma', 'LowLimit - StdSigma','DPW-StdSigma',
+              'Eng_Limit High','Eng_Limit_Low','OverRide Sigma', 'Approval','Graph','Jmp Graphs Live',
+              'Previous High Limit', 'Previous Low Limit', 'GSDS', 'Ituff Token', 'ConfigFile', 'ConfigSet','Pin']
     worksheet.write_row(0, 0, header)
     count = 0
-
+    link_tracker = {}
     for sicclimit in siccLimits:
         count = count + 1
-        row = [sicclimit["TestName"], sicclimit["Mean"], sicclimit["Median"], sicclimit["StdDev"],
-               sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"],
-               sicclimit["LowLimit"], '']
+        row = [sicclimit["TestName"], sicclimit["Mean"], sicclimit["Median"], sicclimit["StdDev"],sicclimit["Sigma"],
+               sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"],sicclimit["LowLimit"],sicclimit['psedu_DPW'],
+               sicclimit['SigmaUpper'], sicclimit['SigmaLower'], sicclimit['std_DPW'],'','','','']
         worksheet.write_row(count, 0, row)
-        worksheet.write_url(count, 9, sicclimit["GraphPath"])
+        worksheet.write_url(count, 17, sicclimit["GraphPath"], string = 'Open Graph')
+
+        if Data_Link[sicclimit["TestName"]] not in link_tracker:
+            url = WriteJslFile(outputPath, Data_Link[sicclimit["TestName"]])
+            link_tracker[Data_Link[sicclimit["TestName"]]] = True
+            worksheet.write_url(count, 18, url)
 
         if sicclimit["TestName"] in existing_limits:
             limits = existing_limits[sicclimit["TestName"]]
@@ -293,13 +400,52 @@ def WriteToFile(siccLimits, outputPath, existing_limits):
             gsds = limits['GSDS']
             ituff_token = limits['ItuffToken']
 
-            row = [ll, hl, gsds, ituff_token,limits['ConfigFile'], limits['ConfigSet'],limits['Pin']]
+            row = [hl, ll, gsds, ituff_token,limits['ConfigFile'], limits['ConfigSet'],limits['Pin']]
 
-            worksheet.write_row(count, 10, row)
+            worksheet.write_row(count, 19, row)
+    with open(outputPath+'/KillsPseudo.txt', 'w') as data:
+        data.write(str(overallKill_limits_psedosigma))
+    with open(outputPath + '/KillsStd.txt', 'w') as data:
+        data.write(str(overallKill_limits_stdLimits))
+    wafersListCount = outputPath + '/WaferCount.txt'
+    num_lines = 1
+    if os.path.isfile(wafersListCount):
+        f = open(wafersListCount)
+        num_lines = int(f.read())
+    Overall_Dpw = ['DPWOverAll_PseudoSigma:', len(overallKill_limits_psedosigma)/num_lines,'DPWOverAll_StdSigma:', len(overallKill_limits_stdLimits)/num_lines]
+    worksheet.write_row(count+1, 0, Overall_Dpw)
 
     workbook.close()
 
     return OutFinalCSVPath
+
+def GetDPWForLimits(data, highLimit_psedo ,lowLimit_psedo, highLimit_std, lowLimit_std, uniqueId, test):
+
+    kills_psedu = []
+    kills_std = []
+    quant = len(data)-1
+    for i in range(quant):
+        point = float(data[i])
+        id = uniqueId[i]
+        if point > float(highLimit_psedo) or point < float(lowLimit_psedo):
+            kills_psedu.append(point)
+            #print(point, highLimit_psedo)
+            if id not in overallKill_limits_psedosigma:
+                overallKill_limits_psedosigma[id]= [test]
+            else:
+                if overallKill_limits_psedosigma[id] != None:
+                    overallKill_limits_psedosigma[id] = overallKill_limits_psedosigma[id].append(test)
+        if point > float(highLimit_std) or point < float(lowLimit_std):
+            kills_std.append(point)
+            if id not in overallKill_limits_stdLimits:
+                overallKill_limits_stdLimits[id]= []
+                overallKill_limits_stdLimits[id].append(test)
+            else:
+                if overallKill_limits_stdLimits[id] != None:
+                    overallKill_limits_stdLimits[id]= overallKill_limits_stdLimits[id].append(test)
+    #print(len(overallKill_limits_stdLimits), len(overallKill_limits_psedosigma))
+
+    return kills_psedu,kills_std
 
 
 def GetBasicParams(datafromCsvDIct, outputPath):
@@ -316,24 +462,46 @@ def GetBasicParams(datafromCsvDIct, outputPath):
         quantile_5 = GetQuantiles(datafromCsvDIct[sicctest][0], 5)
         quantile_95 = GetQuantiles(datafromCsvDIct[sicctest][0], 95)
 
+        psedoSigmaValLower = (1 * (median - quantile_5)) / 1.6449
+        psedoSigmaValUpper = (1 * (quantile_95 - median)) / 1.6449
+
         psedoSigmaLower = (6 * (median - quantile_5)) / 1.6449
         psedoSigmaUpper = (6 * (quantile_95 - median)) / 1.6449
 
-        highLimit = median + psedoSigmaUpper
-        lowLimit = median - psedoSigmaLower
+        highLimit_psedo = median + psedoSigmaUpper
+        lowLimit_psedo = median - psedoSigmaLower
 
-        # GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName)
+        sigmaUpper_std = (6 * std) + median
+        sigmaLower_std = median - (6 * std)
+
+        GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName, lowLimit_psedo, highLimit_psedo, sigmaUpper_std, sigmaLower_std, median)
+
+        psedu_DPW, std_DPW = GetDPWForLimits(datafromCsvDIct[sicctest][0], highLimit_psedo, lowLimit_psedo, sigmaUpper_std, sigmaLower_std, datafromCsvDIct[sicctest][1], sicctest)
+
+        psedu_DPW_len = len(psedu_DPW)
+        std_DPW_len = len(std_DPW)
+        wafersListCount = outputPath + '/WaferCount.txt'
+        if os.path.isfile(wafersListCount):
+            f = open(wafersListCount)
+            num_lines = int(f.read())
+            psedu_DPW_len = psedu_DPW_len / num_lines
+            std_DPW_len = std_DPW_len / num_lines
 
         result = {
+            "Sigma": float(6),
             "TestName": sicctest,
             "Mean": mean,
             "Median": median,
             "StdDev": std,
-            "PseduSigma_Upper": psedoSigmaUpper,
-            "PseduSigma_Lower": psedoSigmaLower,
-            "HighLimit": highLimit,
-            "LowLimit": lowLimit,
-            "GraphPath": fileName
+            "PseduSigma_Upper": psedoSigmaValUpper,
+            "PseduSigma_Lower": psedoSigmaValLower,
+            "HighLimit": highLimit_psedo,
+            "LowLimit": lowLimit_psedo,
+            "GraphPath": fileName,
+            "SigmaUpper": sigmaUpper_std,
+            "SigmaLower": sigmaLower_std,
+            "psedu_DPW": psedu_DPW_len,
+            "std_DPW" : std_DPW_len
         }
         siccLimits.append(result)
 
@@ -355,7 +523,7 @@ def GetQuantiles(x, percentage):
     return quantile
 
 
-def GetPercentileForGraph(x, filename):
+def GetPercentileForGraph(x, filename, psedoSigmaLower, psedoSigmaUpper, highLimit, lowLimit, median):
     maxi = max(x)
     mini = min(x)
     n_bins = len(np.unique(x))
@@ -364,6 +532,13 @@ def GetPercentileForGraph(x, filename):
     mu = 100
 
     fig, ax = plt.subplots(figsize=(8, 4))
+    plt.axvline(x=median, color ='g',label='Median')
+    plt.axvline(x=psedoSigmaLower, color = 'r', label= 'psedoSigma')
+    plt.axvline(x=psedoSigmaUpper, color = 'r')
+    plt.axvline(x=lowLimit, color = 'm',label= 'std Sigma')
+    plt.axvline(x=highLimit, color = 'm')
+    plt.axvline(label = f'Max:{maxi}', color = 'aqua')
+    plt.axvline(label=f'Min:{mini}', color = 'aqua')
 
     # plot the cumulative histogram
     n, bins, patches = ax.hist(x, n_bins, density=True, histtype='step',
@@ -375,8 +550,35 @@ def GetPercentileForGraph(x, filename):
     ax.grid(True)
     ax.legend(loc='right')
     ax.set_title('Cumulative steps')
-    ax.set_ylabel('SICC measurement')
-    ax.set_xlabel('Percentile')
+    ax.set_xlabel('SICC measurement')
+    ax.set_ylabel('Percentile')
     plt.savefig(filename, bbox_inches='tight')
+    legend = plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
     plt.clf()
     plt.close()
+
+
+###################################################################################################################################################################
+
+
+def GetIdvNameAndData(datafromCsvDIct):
+    idvData = {}
+    for key in datafromCsvDIct:
+        if key.find('::')<1:
+            idvData[key] = datafromCsvDIct[key]
+
+    return idvData
+
+def get_idv_sicc_pairs(datafromCsvDIct, idvData):
+
+    idv = 'EMPLY'
+    pair_sicc_idv = {}
+
+    for key in idvData :
+        idv = key
+
+    for test in datafromCsvDIct:
+        if test != idv:
+            key = idv + '@' + test
+            pair_sicc_idv[key] = 0.99
+    return pair_sicc_idv

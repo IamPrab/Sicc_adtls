@@ -10,7 +10,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(True, False)  # add assertion here
 
     def test_readcsvSICC_andPerformStuff(self):
-        path = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test\\JsonVminData"
+        path = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test\\csvSiccData"
         outputPath = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test"
 
         subfolders_site = [f.path for f in os.scandir(path) if f.is_dir()]
@@ -115,11 +115,11 @@ class MyTestCase(unittest.TestCase):
         self.assertIsNone(res)
 
     def test_Limits(self):
-        approvalFile = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test\\SICCApproval.xlsx"
-        approvalFileData = Utils.ReadApprovalFile(approvalFile)
+        #approvalFile = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test\\SICCApproval.xlsx"
+        #approvalFileData = Utils.ReadApprovalFile(approvalFile)
 
-        path = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test\\csvSiccData"
-        outputPath = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\WLB_8PWJ_WLB\\8PWJ_G3074C\\SIU_Test"
+        path = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\AXEL_SICC_LIMITS_REPORT\\RPL_8PQF_RPL\\test\\csvSiccData"
+        outputPath = "\\\\pjwade-desk.ger.corp.intel.com\\AXEL_ADTL_REPORTS\\AXEL_SICC_LIMITS_REPORT\\RPL_8PQF_RPL\\test"
 
         subfolders_site = [f.path for f in os.scandir(path) if f.is_dir()]
 

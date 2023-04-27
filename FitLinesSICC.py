@@ -25,9 +25,9 @@ def ReadData (path):
 
 def FitLinesSICCFactory (outputPath, datafromCsvDIct):
 
-    pairs = Utils.CorrelationValues(datafromCsvDIct)
+    #pairs = Utils.CorrelationValues(datafromCsvDIct)
 
-    #pairs = Utils.createPairs(datafromCsvDIct)
+    pairs = Utils.createPairs(datafromCsvDIct)
     print('Pairs Created')
 
     pairFits = Utils.CalFits(pairs, datafromCsvDIct)
@@ -58,31 +58,49 @@ def LimitsSICCFactory ( datafromCsvDIct, outputPath):
 
     return
 
+def SiccIdvFitLines(datafromCsvDIct, outputPath):
+
+    idv_data = Utils.GetIdvNameAndData(datafromCsvDIct)
+
+    pairs = Utils.get_idv_sicc_pairs(datafromCsvDIct, idv_data)
+
+    pairFits = Utils.CalFits(pairs, datafromCsvDIct)
+    print('Fits Calculated')
+
+    OutPutApproval = Utils.WriteTOApprovalFile(pairFits, outputPath)
+    print('Writing Approval File')
+
+    return OutPutApproval
+
+    return
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('operation', help="SiccFit/SiccGraphs/SiccIdvFits")
+    parser.add_argument('input',help="inputFile")
+    parser.add_argument('output',help="outputFile")
 
 
+    args = parser.parse_args()
 
-parser = argparse.ArgumentParser()
+    path = args.input
+    outputPath = args.output
 
-parser.add_argument('operation', help="SiccFit/SiccGraphs")
-parser.add_argument('input',help="inputFile")
-parser.add_argument('output',help="outputFile")
+    print('Reading dataFiles')
+    datafromCsvDIct = ReadData(path)
 
-args = parser.parse_args()
+    if args.operation == 'SiccFit':
+        OutPutApproval = FitLinesSICCFactory(outputPath, datafromCsvDIct)
 
-path = args.input
-outputPath = args.output
+    if args.operation == 'SiccGraphs':
+        DrawGraphs(datafromCsvDIct, outputPath)
 
-print('Reading dataFiles')
-datafromCsvDIct = ReadData(path)
+    if args.operation == 'SiccLimits':
+        LimitsSICCFactory(datafromCsvDIct,outputPath)
 
-if args.operation == 'SiccFit':
-    OutPutApproval = FitLinesSICCFactory(outputPath, datafromCsvDIct)
-
-if args.operation == 'SiccGraphs':
-    DrawGraphs(datafromCsvDIct, outputPath)
-
-if args.operation == 'SiccLimits':
-    LimitsSICCFactory(datafromCsvDIct,outputPath)
+    if args.operation == 'SiccIdvFits':
+        SiccIdvFitLines(datafromCsvDIct, outputPath)
 
 
 
