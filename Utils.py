@@ -22,6 +22,7 @@ Data_Link = {}
 
 overallKill_limits_psedosigma = {}
 overallKill_limits_stdLimits = {}
+overallKill_limits_prevouseqns = {}
 
 
 def readcsvSICC(datafiles):
@@ -220,7 +221,8 @@ def CalFits(pairs, datafromCsvDIct):
 def WriteTOApprovalFile(pairFits, path):
     OutFinalCSVPath = path + "\\SICCApproval.xlsx"
     workbook = xlsxwriter.Workbook(OutFinalCSVPath)
-    worksheet = workbook.add_worksheet()
+    worksheet = workbook.add_worksheet("Config")
+    #worksheet2 = workbook.add_worksheet("Proposal")
     header = ['SICC Test X', 'SICC Test Y', 'Slope', 'Intercept', 'RMSE', 'DPW']
     worksheet.write_row(0, 0, header)
     count = 0
@@ -372,26 +374,34 @@ def WriteJslFile(outputPath, DataLink):
 def WriteToFile(siccLimits, outputPath, existing_limits):
     OutFinalCSVPath = outputPath + "\\SICCApprovalLimits.xlsx"
     workbook = xlsxwriter.Workbook(OutFinalCSVPath)
-    worksheet = workbook.add_worksheet()
+    worksheet = workbook.add_worksheet("Config")
+    #worksheet2= workbook.add_worksheet("Proposal")
     header = ['SICC Test', 'Mean', 'Median', 'Standard Deviation','Sigma','PseudoSigma_Upper', 'PseudoSigma_Lower', 'HighLimit- PseuduSigma',
-              'LowLimit- PseudoSigma','DPW-PseudoSigma', 'HighLimit - StdSigma', 'LowLimit - StdSigma','DPW-StdSigma',
+              'LowLimit- PseudoSigma','DPW-PseudoSigma','psedo_DPW_TGood', 'psedo_DPW_TBad', 'HighLimit - StdSigma', 'LowLimit - StdSigma',
+              'DPW-StdSigma','std_DPW_TGood', 'std_DPW_TBad',
               'Eng_Limit High','Eng_Limit_Low','OverRide Sigma', 'Approval','Graph','Jmp Graphs Live',
-              'Previous High Limit', 'Previous Low Limit', 'GSDS', 'Ituff Token', 'ConfigFile', 'ConfigSet','Pin']
+              'Previous High Limit', 'Previous Low Limit','DPW_Previous_Equation','prev_DPW_TGood','prev_DPW_TBad',
+              'DPW-PseudoSigma8','psedo_DPW_TGood_Sigma8', 'psedo_DPW_TBad_Sigma8','DPW-StdSigma8','std_DPW_TGood_Sigma8', 'std_DPW_TBad_Sigma8',
+              'DPW-PseudoSigma10', 'psedo_DPW_TGood_Sigma10', 'psedo_DPW_TBad_Sigma10', 'DPW-StdSigma10','std_DPW_TGood_Sigma10', 'std_DPW_TBad_Sigma10',
+              'GSDS', 'Ituff Token', 'ConfigFile', 'ConfigSet','Pin']
     worksheet.write_row(0, 0, header)
     count = 0
     link_tracker = {}
+    #worksheet2.write_row(0,0,["jkh","bhbg"])
     for sicclimit in siccLimits:
         count = count + 1
         row = [sicclimit["TestName"], sicclimit["Mean"], sicclimit["Median"], sicclimit["StdDev"],sicclimit["Sigma"],
-               sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"],sicclimit["LowLimit"],sicclimit['psedu_DPW'],
-               sicclimit['SigmaUpper'], sicclimit['SigmaLower'], sicclimit['std_DPW'],'','','','']
+               sicclimit["PseduSigma_Upper"], sicclimit["PseduSigma_Lower"], sicclimit["HighLimit"],sicclimit["LowLimit"],
+               sicclimit['psedu_DPW'], sicclimit['psedo_DPW_TGood'], sicclimit['psedo_DPW_TBad'],
+               sicclimit['SigmaUpper'], sicclimit['SigmaLower'], sicclimit['std_DPW'], sicclimit['std_DPW_TGood'], sicclimit['std_DPW_TBad'],
+               '','','','']
         worksheet.write_row(count, 0, row)
-        worksheet.write_url(count, 17, sicclimit["GraphPath"], string = 'Open Graph')
+        worksheet.write_url(count, 21, sicclimit["GraphPath"], string = 'Open Graph')
 
         if Data_Link[sicclimit["TestName"]] not in link_tracker:
             url = WriteJslFile(outputPath, Data_Link[sicclimit["TestName"]])
             link_tracker[Data_Link[sicclimit["TestName"]]] = True
-            worksheet.write_url(count, 18, url)
+            worksheet.write_url(count, 22, url)
 
         if sicclimit["TestName"] in existing_limits:
             limits = existing_limits[sicclimit["TestName"]]
@@ -400,9 +410,14 @@ def WriteToFile(siccLimits, outputPath, existing_limits):
             gsds = limits['GSDS']
             ituff_token = limits['ItuffToken']
 
-            row = [hl, ll, gsds, ituff_token,limits['ConfigFile'], limits['ConfigSet'],limits['Pin']]
+            row = [hl, ll,sicclimit['prev_DPW'],sicclimit['prev_DPW_TGood'], sicclimit['prev_DPW_TBad'],
+                   sicclimit['psedu_DPW_8Sigma'],sicclimit['psedo_DPW_TGood_8Sigma'],sicclimit['psedo_DPW_TBad_8Sigma'],
+                   sicclimit['std_DPW_8Sigma'],sicclimit['std_DPW_TGood_8Sigma'],sicclimit['std_DPW_TBad_8Sigma'],
+                   sicclimit['psedu_DPW_10Sigma'], sicclimit['psedo_DPW_TGood_10Sigma'],sicclimit['psedo_DPW_TBad_10Sigma'],
+                   sicclimit['std_DPW_10Sigma'], sicclimit['std_DPW_TGood_10Sigma'], sicclimit['std_DPW_TBad_10Sigma'],
+                    gsds, ituff_token,limits['ConfigFile'], limits['ConfigSet'],limits['Pin']]
 
-            worksheet.write_row(count, 19, row)
+            worksheet.write_row(count, 23, row)
     with open(outputPath+'/KillsPseudo.txt', 'w') as data:
         data.write(str(overallKill_limits_psedosigma))
     with open(outputPath + '/KillsStd.txt', 'w') as data:
@@ -419,36 +434,70 @@ def WriteToFile(siccLimits, outputPath, existing_limits):
 
     return OutFinalCSVPath
 
-def GetDPWForLimits(data, highLimit_psedo ,lowLimit_psedo, highLimit_std, lowLimit_std, uniqueId, test):
+def GetDPWForLimits(data, highLimit_psedo ,lowLimit_psedo, highLimit_std, lowLimit_std, prevHighLim, prevLowLim, uniqueId, test):
 
     kills_psedu = []
+    kills_goodDiePsedu = 0
+    kills_BadDiePsedu = 0
     kills_std = []
+    kills_goodDieSTD = 0
+    kills_BadDieSTD = 0
+    kills_prev = []
+    kills_goodDiePrev = 0
+    kills_BadDiePrev = 0
     quant = len(data)-1
     for i in range(quant):
         point = float(data[i])
         id = uniqueId[i]
+        bin = id.split('%')[4]
+        #print(id)
         if point > float(highLimit_psedo) or point < float(lowLimit_psedo):
             kills_psedu.append(point)
+            if float(bin) == 1 or float(bin) == 2:
+                kills_goodDiePsedu += 1
+            else:
+                kills_BadDiePsedu += 1
             #print(point, highLimit_psedo)
             if id not in overallKill_limits_psedosigma:
                 overallKill_limits_psedosigma[id]= [test]
             else:
                 if overallKill_limits_psedosigma[id] != None:
                     overallKill_limits_psedosigma[id] = overallKill_limits_psedosigma[id].append(test)
+
+
         if point > float(highLimit_std) or point < float(lowLimit_std):
             kills_std.append(point)
+            if float(bin) == 1 or float(bin) == 2:
+                kills_goodDieSTD += 1
+            else:
+                kills_BadDieSTD += 1
             if id not in overallKill_limits_stdLimits:
                 overallKill_limits_stdLimits[id]= []
                 overallKill_limits_stdLimits[id].append(test)
             else:
                 if overallKill_limits_stdLimits[id] != None:
                     overallKill_limits_stdLimits[id]= overallKill_limits_stdLimits[id].append(test)
+
+        if point > float(prevHighLim) or point < float(prevLowLim):
+            kills_prev.append(point)
+            if float(bin) == 1 or float(bin) == 2:
+                kills_goodDiePrev += 1
+            else:
+                kills_BadDiePrev += 1
+            if id not in overallKill_limits_prevouseqns:
+                overallKill_limits_prevouseqns[id] = []
+                overallKill_limits_prevouseqns[id].append(test)
+            else:
+                if overallKill_limits_prevouseqns[id] != None:
+                    overallKill_limits_prevouseqns[id] = overallKill_limits_prevouseqns[id].append(test)
+
     #print(len(overallKill_limits_stdLimits), len(overallKill_limits_psedosigma))
+    binsKills = [kills_goodDiePsedu, kills_BadDiePsedu, kills_goodDieSTD, kills_BadDieSTD, kills_goodDiePrev, kills_BadDiePrev]
 
-    return kills_psedu,kills_std
+    return kills_psedu, kills_std, kills_prev, binsKills
 
 
-def GetBasicParams(datafromCsvDIct, outputPath):
+def GetBasicParams(datafromCsvDIct, outputPath, existing_limits):
     siccLimits = []
 
     results_dir = os.path.join(outputPath + '/GraphDataSICCLimits')
@@ -467,25 +516,83 @@ def GetBasicParams(datafromCsvDIct, outputPath):
 
         psedoSigmaLower = (6 * (median - quantile_5)) / 1.6449
         psedoSigmaUpper = (6 * (quantile_95 - median)) / 1.6449
+        psedoSigmaLower8Sigma = (8 * (median - quantile_5)) / 1.6449
+        psedoSigmaUpper8Sigma = (8 * (quantile_95 - median)) / 1.6449
+        psedoSigmaLower10Sigma = (10 * (median - quantile_5)) / 1.6449
+        psedoSigmaUpper10Sigma = (10 * (quantile_95 - median)) / 1.6449
 
         highLimit_psedo = median + psedoSigmaUpper
         lowLimit_psedo = median - psedoSigmaLower
+        highLimit_psedo8Sigma = median + psedoSigmaUpper8Sigma
+        lowLimit_psedo8Sigma = median - psedoSigmaLower8Sigma
+        highLimit_psedo10Sigma = median + psedoSigmaUpper10Sigma
+        lowLimit_psedo10Sigma = median - psedoSigmaLower10Sigma
 
         sigmaUpper_std = (6 * std) + median
         sigmaLower_std = median - (6 * std)
+        sigmaUpper_std8Sigma = (8 * std) + median
+        sigmaLower_std8Sigma = median - (8 * std)
+        sigmaUpper_std10Sigma = (10 * std) + median
+        sigmaLower_std10Sigma = median - (10 * std)
 
-        GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName, lowLimit_psedo, highLimit_psedo, sigmaUpper_std, sigmaLower_std, median)
+        LimitsSigmas = {
+            'psedoSigmaLower' : lowLimit_psedo,
+            'psedoSigmaUpper' : highLimit_psedo,
+            'psedoSigmaLower8Sigma' : highLimit_psedo8Sigma,
+            'psedoSigmaUpper8Sigma' : lowLimit_psedo8Sigma,
+            'psedoSigmaLower10Sigma' : highLimit_psedo10Sigma,
+            'psedoSigmaUpper10Sigma' : lowLimit_psedo10Sigma,
+            'sigmaUpper_std' : sigmaUpper_std,
+            'sigmaLower_std' : sigmaLower_std,
+            'sigmaUpper_std8Sigma' : sigmaUpper_std8Sigma,
+            'sigmaLower_std8Sigma' : sigmaLower_std8Sigma,
+            'sigmaUpper_std10Sigma' : sigmaUpper_std10Sigma,
+            'sigmaLower_std10Sigma' : sigmaLower_std10Sigma
+        }
 
-        psedu_DPW, std_DPW = GetDPWForLimits(datafromCsvDIct[sicctest][0], highLimit_psedo, lowLimit_psedo, sigmaUpper_std, sigmaLower_std, datafromCsvDIct[sicctest][1], sicctest)
+        GetPercentileForGraph(datafromCsvDIct[sicctest][0], fileName, median, LimitsSigmas)
+
+
+        old_HighLimit = 0
+        old_LowLimit = 0
+
+        if sicctest in existing_limits:
+            old_HighLimit = existing_limits[sicctest]["HighLimit"]
+            old_LowLimit = existing_limits[sicctest]["LowLimit"]
+
+        psedu_DPW, std_DPW, prevDPW,binsKills = GetDPWForLimits(datafromCsvDIct[sicctest][0], highLimit_psedo, lowLimit_psedo,
+                                                                sigmaUpper_std, sigmaLower_std, old_HighLimit,old_LowLimit,datafromCsvDIct[sicctest][1], sicctest)
+        psedu_DPW8Sigma, std_DPW8Sigma, prevDPW8Sigma, binsKills8Sigma = GetDPWForLimits(datafromCsvDIct[sicctest][0], highLimit_psedo8Sigma,
+                                                                 lowLimit_psedo8Sigma,
+                                                                 sigmaUpper_std8Sigma, sigmaLower_std8Sigma, old_HighLimit,
+                                                                 old_LowLimit, datafromCsvDIct[sicctest][1], sicctest)
+        psedu_DPW10Sigma, std_DPW10Sigma, prevDPW10Sigma, binsKills10Sigma = GetDPWForLimits(datafromCsvDIct[sicctest][0], highLimit_psedo10Sigma,
+                                                                 lowLimit_psedo10Sigma,
+                                                                 sigmaUpper_std10Sigma, sigmaLower_std10Sigma, old_HighLimit,
+                                                                 old_LowLimit, datafromCsvDIct[sicctest][1], sicctest)
 
         psedu_DPW_len = len(psedu_DPW)
         std_DPW_len = len(std_DPW)
+        prev_DPW_len = len(prevDPW)
+        psedu_DPW_len8Sigma = len(psedu_DPW8Sigma)
+        std_DPW_len8Sigma = len(std_DPW8Sigma)
+        psedu_DPW_len10Sigma = len(psedu_DPW)
+        std_DPW_len10Sigma = len(std_DPW)
+
         wafersListCount = outputPath + '/WaferCount.txt'
         if os.path.isfile(wafersListCount):
             f = open(wafersListCount)
             num_lines = int(f.read())
             psedu_DPW_len = psedu_DPW_len / num_lines
             std_DPW_len = std_DPW_len / num_lines
+            prev_DPW_len = prev_DPW_len / num_lines
+            psedu_DPW_len8Sigma = psedu_DPW_len8Sigma / num_lines
+            std_DPW_len8Sigma = std_DPW_len8Sigma /num_lines
+            psedu_DPW_len10Sigma = psedu_DPW_len10Sigma /num_lines
+            std_DPW_len10Sigma = std_DPW_len10Sigma / num_lines
+
+            for binkills in binsKills:
+                binkills = binkills/num_lines
 
         result = {
             "Sigma": float(6),
@@ -501,7 +608,26 @@ def GetBasicParams(datafromCsvDIct, outputPath):
             "SigmaUpper": sigmaUpper_std,
             "SigmaLower": sigmaLower_std,
             "psedu_DPW": psedu_DPW_len,
-            "std_DPW" : std_DPW_len
+            "std_DPW" : std_DPW_len,
+            "prev_DPW" : prev_DPW_len,
+            "psedo_DPW_TGood" : binsKills[0],
+            "psedo_DPW_TBad" : binsKills[1],
+            "std_DPW_TGood" : binsKills[2],
+            "std_DPW_TBad" : binsKills[3],
+            "prev_DPW_TGood" : binsKills[4],
+            "prev_DPW_TBad": binsKills[5],
+            "psedu_DPW_8Sigma": psedu_DPW_len8Sigma,
+            "std_DPW_8Sigma" : std_DPW_len8Sigma,
+            "psedo_DPW_TGood_8Sigma" : binsKills8Sigma[0],
+            "psedo_DPW_TBad_8Sigma" : binsKills8Sigma[1],
+            "std_DPW_TGood_8Sigma" : binsKills8Sigma[2],
+            "std_DPW_TBad_8Sigma" : binsKills8Sigma[3],
+            "psedu_DPW_10Sigma": psedu_DPW_len10Sigma,
+            "std_DPW_10Sigma" : std_DPW_len10Sigma,
+            "psedo_DPW_TGood_10Sigma" : binsKills10Sigma[0],
+            "psedo_DPW_TBad_10Sigma" : binsKills10Sigma[1],
+            "std_DPW_TGood_10Sigma" : binsKills10Sigma[2],
+            "std_DPW_TBad_10Sigma" : binsKills10Sigma[3]
         }
         siccLimits.append(result)
 
@@ -523,7 +649,7 @@ def GetQuantiles(x, percentage):
     return quantile
 
 
-def GetPercentileForGraph(x, filename, psedoSigmaLower, psedoSigmaUpper, highLimit, lowLimit, median):
+def GetPercentileForGraph(x, filename,  median, LimitSigmas):
     maxi = max(x)
     mini = min(x)
     n_bins = len(np.unique(x))
@@ -531,33 +657,71 @@ def GetPercentileForGraph(x, filename, psedoSigmaLower, psedoSigmaUpper, highLim
     sigma = (maxi - mini) / n_bins
     mu = 100
 
-    fig, ax = plt.subplots(figsize=(8, 4))
-    plt.axvline(x=median, color ='g',label='Median')
-    plt.axvline(x=psedoSigmaLower, color = 'r', label= 'psedoSigma')
-    plt.axvline(x=psedoSigmaUpper, color = 'r')
-    plt.axvline(x=lowLimit, color = 'm',label= 'std Sigma')
-    plt.axvline(x=highLimit, color = 'm')
-    plt.axvline(label = f'Max:{maxi}', color = 'aqua')
-    plt.axvline(label=f'Min:{mini}', color = 'aqua')
+    percentiles = np.percentile(x, np.arange(0, 100, 0.5))
 
-    # plot the cumulative histogram
-    n, bins, patches = ax.hist(x, n_bins, density=True, histtype='step',
-                               cumulative=True, label='Empirical')
+    # Plotting
+    plt.figure(figsize=(7, 7))
+    plt.plot(percentiles, np.arange(0, 100, 0.5), 'o', markersize=3, label = 'Values')
+    plt.xlabel('Percentile')
+    plt.ylabel('Values')
+    plt.title('Percentile Plot')
+    plt.grid(True)
+    plt.axvline(x=float(median),color = 'black', label = 'Median')
+    plt.axvline(x=float(LimitSigmas['psedoSigmaLower']), color = 'red', label = 'PsedoSigmaLimit Sigma 6')
+    plt.axvline(x=float(LimitSigmas['psedoSigmaUpper']), color='red')
+    plt.axvline(x=float(LimitSigmas['psedoSigmaLower8Sigma']), color='grey', linestyle = '--',label = 'PsedoSigmaLimit Sigma 8')
+    plt.axvline(x=float(LimitSigmas['psedoSigmaUpper8Sigma']), color='grey',linestyle = '--', )
+    light_blue = (0.7, 0.7, 1.0)
+    plt.axvline(x=float(LimitSigmas['psedoSigmaLower10Sigma']), color=light_blue,linestyle = '--', label = 'PsedoSigmaLimit Sigma 10')
+    plt.axvline(x=float(LimitSigmas['psedoSigmaUpper10Sigma']), color=light_blue,linestyle = '--')
+    plt.axvline(x=float(LimitSigmas['sigmaLower_std']), color='green', label='STD_Limits')
+    plt.axvline(x=float(LimitSigmas['sigmaUpper_std']), color='green')
+    light_green = (0.678, 0.847, 0.655)
+    plt.axvline(x=float(LimitSigmas['sigmaUpper_std8Sigma']), color=light_green,linestyle = '--', label='STD_Limits Sigma 8')
+    plt.axvline(x=float(LimitSigmas['sigmaLower_std8Sigma']), color=light_green,linestyle = '--')
+    light_pink = (1.0, 0.714, 0.757)
+    plt.axvline(x=float(LimitSigmas['sigmaUpper_std10Sigma']), color=light_pink,linestyle = '--', label='STD_Limits Sigma 10')
+    plt.axvline(x=float(LimitSigmas['sigmaLower_std10Sigma']), color=light_pink,linestyle = '--')
+    plt.legend( bbox_to_anchor=(1.05, 1), loc='upper left')
+    # Adjust figure boundaries if necessary
+    plt.tight_layout()
 
-    # Overlay a reversed cumulative histogram.
 
-    # tidy up the figure
-    ax.grid(True)
-    ax.legend(loc='right')
-    ax.set_title('Cumulative steps')
-    ax.set_xlabel('SICC measurement')
-    ax.set_ylabel('Percentile')
+    # legval = ["blue", "orange"]
+    # legend_ax = plt.gca().twinx()  # Create a twin Axes object
+    # legend_ax.set_axis_off()  # Turn off the axis for the twin Axes
+    # legend_ax.legend(
+    #     [plt.Line2D([0], [0], marker='o', color='w', label=legval[i], markerfacecolor=legval[i], markersize=8) for i in
+    #      range(len(legval))],
+    #     legval, loc='upper left', bbox_to_anchor=(1.05, 1))
+
+    # Adjust figure boundaries if necessary
+    plt.tight_layout()
+
+
     plt.savefig(filename, bbox_inches='tight')
-    legend = plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    #plt.show()
     plt.clf()
     plt.close()
 
+def GetPercentileForGraph2(x, filename, psedoSigmaLower, psedoSigmaUpper, highLimit, lowLimit, median):
+    maxi = max(x)
+    mini = min(x)
+    n_bins = len(np.unique(x))
+    # n_bins = 100
+    sigma = (maxi - mini) / n_bins
+    mu = 100
 
+    percentiles = np.percentile(x, np.arange(0, 100, 0.5))
+
+    # Plotting
+    plt.figure(figsize=(6,8))
+    plt.plot(percentiles, np.arange(0, 100, 0.5), 'o', markersize=3)
+    plt.xlabel('Percentile')
+    plt.ylabel('Values')
+    plt.title('Percentile Plot')
+    plt.grid(True)
+    plt.show()
 ###################################################################################################################################################################
 
 

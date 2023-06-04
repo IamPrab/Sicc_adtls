@@ -3,8 +3,6 @@ import xml.etree.ElementTree as ET
 import os
 import EditXML_Utils
 
-
-
 def EditXML(tp_path, approval_file, outputPath):
 
     approvals = EditXML_Utils.ParseApprovalFile(approval_file)

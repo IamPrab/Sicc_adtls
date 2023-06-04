@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="39b9586c-4a87-4c9e-a513-28eaccafaac4" name="Changes" comment="Basic SICC working">
-      <change afterPath="$PROJECT_DIR$/RunJsl.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/editAdtlXmls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test_Utils.py" afterDir="false" />
+    <list default="true" id="39b9586c-4a87-4c9e-a513-28eaccafaac4" name="Changes" comment="Sicc Limits updates done">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Correlation_Val.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/EditXML_Utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/EditXML_Utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EditXMl.py" beforeDir="false" afterPath="$PROJECT_DIR$/EditXML_SiccLimits.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/FitLinesSICC.py" beforeDir="false" afterPath="$PROJECT_DIR$/FitLinesSICC.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utiltests.py" beforeDir="false" afterPath="$PROJECT_DIR$/utiltests.py" afterDir="false" />
@@ -35,6 +34,15 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/test_Utils.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/EditXML_SiccLimits.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Utils.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/FitLinesSICC.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/EditXML_Utils.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/RunJsl.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/utiltests.py" root0="FORCE_HIGHLIGHTING" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -51,21 +59,7 @@
     <property name="last_opened_file_path" value="$USER_HOME$/PycharmProjects/JsonToXml" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
-  <component name="RunManager" selected="Python tests.Python tests for utiltests.MyTestCase.test_Limits">
-    <configuration name="Python tests for test_Utils.test_get_idv_name_and_data" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="Axel_SICCs" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_Utils.test_get_idv_name_and_data&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python tests.Python tests for utiltests.MyTestCase.test_GraphsForLimits">
     <configuration name="Python tests for utiltests.MyTestCase.test_CorrelationVlaues" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="Axel_SICCs" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -94,6 +88,20 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Python tests for utiltests.MyTestCase.test_GraphsForLimits" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="Axel_SICCs" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;utiltests.MyTestCase.test_GraphsForLimits&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="Python tests for utiltests.MyTestCase.test_Limits" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="Axel_SICCs" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -108,7 +116,7 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for utiltests.MyTestCase.test_readcsvSICC_andPerformStuff" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for utiltests.MyTestCase.test_prettify" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="Axel_SICCs" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -118,17 +126,17 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;utiltests.MyTestCase.test_readcsvSICC_andPerformStuff&quot;" />
+      <option name="_new_target" value="&quot;utiltests.MyTestCase.test_prettify&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_GraphsForLimits" />
+        <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_EditXML" />
+        <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_prettify" />
         <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_Limits" />
         <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_CorrelationVlaues" />
-        <item itemvalue="Python tests.Python tests for test_Utils.test_get_idv_name_and_data" />
-        <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_readcsvSICC_andPerformStuff" />
-        <item itemvalue="Python tests.Python tests for utiltests.MyTestCase.test_EditXML" />
       </list>
     </recent_temporary>
   </component>
@@ -162,7 +170,14 @@
       <option name="project" value="LOCAL" />
       <updated>1681208516050</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Sicc Limits updates done">
+      <created>1682605924325</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1682605924325</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -179,14 +194,15 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="started SIcc proj .. Done basics" />
     <MESSAGE value="Basic SICC working" />
-    <option name="LAST_COMMIT_MESSAGE" value="Basic SICC working" />
+    <MESSAGE value="Sicc Limits updates done" />
+    <option name="LAST_COMMIT_MESSAGE" value="Sicc Limits updates done" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>248</line>
+          <line>250</line>
           <option name="timeStamp" value="28" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -196,62 +212,57 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>50</line>
+          <line>55</line>
           <option name="timeStamp" value="67" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>69</line>
+          <line>74</line>
           <option name="timeStamp" value="69" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>51</line>
+          <line>56</line>
           <option name="timeStamp" value="71" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>32</line>
+          <line>37</line>
           <option name="timeStamp" value="77" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>249</line>
+          <line>251</line>
           <option name="timeStamp" value="91" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>112</line>
+          <line>117</line>
           <option name="timeStamp" value="98" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>139</line>
+          <line>144</line>
           <option name="timeStamp" value="107" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>145</line>
+          <line>150</line>
           <option name="timeStamp" value="108" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/EditXML_Utils.py</url>
-          <line>138</line>
+          <line>176</line>
           <option name="timeStamp" value="114" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/EditXML_Utils.py</url>
-          <line>124</line>
-          <option name="timeStamp" value="117" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>155</line>
+          <line>160</line>
           <option name="timeStamp" value="118" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/EditXML_Utils.py</url>
-          <line>136</line>
+          <line>174</line>
           <option name="timeStamp" value="120" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -261,33 +272,38 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>567</line>
+          <line>731</line>
           <option name="timeStamp" value="125" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>569</line>
+          <line>733</line>
           <option name="timeStamp" value="126" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>478</line>
+          <line>562</line>
           <option name="timeStamp" value="127" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utiltests.py</url>
-          <line>135</line>
+          <line>140</line>
           <option name="timeStamp" value="142" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>447</line>
-          <option name="timeStamp" value="159" />
+          <url>file://$PROJECT_DIR$/utiltests.py</url>
+          <line>159</line>
+          <option name="timeStamp" value="161" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Utils.py</url>
-          <line>436</line>
-          <option name="timeStamp" value="160" />
+          <line>559</line>
+          <option name="timeStamp" value="187" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/utiltests.py</url>
+          <line>106</line>
+          <option name="timeStamp" value="188" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
